@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "logicAppName": {
-      "value": "ARMLogicApp"
+      "value": "TestLogicApp"
     },
     //"gmail_1_Connection_Name": {
     //  "value": "gmail"
@@ -15,7 +15,7 @@
       "value": "southeastasia"
     },
     "functionAppName": {
-      "value": "Sample"
+      "value": "Test"
     }
   }
 }

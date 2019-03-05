@@ -5,14 +5,17 @@
     "logicAppName": {
       "value": "ARMLogicApp"
     },
-    "gmail_1_Connection_Name": {
-      "value": "gmail"
-    },
-    "gmail_1_Connection_DisplayName": {
-      "value": "sanapalasantoshi@gmail.com"
-    },
+    //"gmail_1_Connection_Name": {
+    //  "value": "gmail"
+    //},
+    //"gmail_1_Connection_DisplayName": {
+    //  "value": "sanapalasantoshi@gmail.com"
+    //},
     "logicAppLocation": {
       "value": "southeastasia"
+    },
+    "functionAppName": {
+      "value": "Sample"
     }
   }
 }

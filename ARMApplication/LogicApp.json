@@ -10,8 +10,13 @@
         "description": "Name of the Logic App."
       }
     },
-  
-    "logicAppLocation": {
+    "functionAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the function app to create. Must be globally unique."
+      }
+    },
+    "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
       "allowedValues": [
@@ -45,112 +50,180 @@
         "description": "Location of the Logic App."
       }
     },
-    "gmail_1_Connection_Name": {
+    "LogicAppLocation": {
       "type": "string",
-      "defaultValue": "gmail"
-    },
-    "gmail_1_Connection_DisplayName": {
-      "type": "string"
+      "minLength": 1,
+      "allowedValues": [
+        "[resourceGroup().location]",
+        "eastasia",
+        "southeastasia",
+        "centralus",
+        "eastus",
+        "eastus2",
+        "westus",
+        "northcentralus",
+        "southcentralus",
+        "northeurope",
+        "westeurope",
+        "japanwest",
+        "japaneast",
+        "brazilsouth",
+        "australiaeast",
+        "australiasoutheast",
+        "southindia",
+        "centralindia",
+        "westindia",
+        "canadacentral",
+        "canadaeast",
+        "uksouth",
+        "ukwest",
+        "westcentralus",
+        "westus2"
+      ],
+      "defaultValue": "[resourceGroup().location]"
     }
   },
-  "variables": {},
+  "variables": {
+    "repoUrl": "https://github.com/santoshi4/ARMSource.git",
+    "branch": "master",
+    "functionName": "Echo",
+    "hostingPlanName": "[parameters('functionAppName')]",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'azfunctions')]",
+    "storageACcountid": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+    "LogicAppLocation": "[parameters('location')]",
+    "storageAccountType": "Standard_LRS"
+  },
   "resources": [
     {
       "name": "[parameters('logicAppName')]",
       "type": "Microsoft.Logic/workflows",
-      "location": "[parameters('logicAppLocation')]",
+      "location": "[parameters('LogicAppLocation')]",
+      "apiVersion": "2016-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites/sourcecontrols', parameters('functionAppName'), 'web')]"
+      ],
       "tags": {
         "displayName": "LogicApp"
       },
-      "apiVersion": "2016-06-01",
       "properties": {
         "definition": {
           "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
           "actions": {
-            "Send_email": {
-              "type": "ApiConnection",
-              "inputs": {
-                "host": {
-                  "connection": {
-                    "name": "@parameters('$connections')['gmail']['connectionId']"
-                  }
-                },
-                "method": "post",
-                "body": {
-                  "To": "santoshimadhu.santoshi@gmail.com",
-                  "Subject": "TestMail@{outputs('Function1')['statusCode']}"
-                },
-                "path": "/Mail"
-              },
-              "runAfter": {
-                "Function1": [
-                  "Succeeded" 
-                ]
-              }
-            },
-            "Function1": {
+            "Azure_Function": {
               "type": "Function",
               "inputs": {
-                "body": "@triggerBody()?['name']",
+                "body": "@triggerBody()",
                 "function": {
-                  "id": "/subscriptions/f6b54587-13e8-4bd8-937c-a0fc0e60342b/resourceGroups/cResourcegroup/providers/Microsoft.Web/sites/ARMFunctionAppService/functions/Function1"
+                  "id": "[resourceId('Microsoft.Web/sites/functions', parameters('functionAppName'), variables('functionName'))]"
                 }
               },
               "runAfter": {}
+            },
+            "Response": {
+              "type": "Response",
+              "inputs": {
+                "statusCode": 200,
+                "body": "@body('Azure_Function')"
+              },
+              "runAfter": {
+                "Azure_Function": [
+                  "Succeeded"
+                ]
+              }
             }
           },
-          "parameters": {
-            "$connections": {
-              "defaultValue": {},
-              "type": "Object"
-            }
-          },
+          "parameters": {},
           "triggers": {
-            "manual": {
+            "Request": {
               "type": "Request",
               "kind": "Http",
               "inputs": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string"
-                    }
-                  }
-                }
+                "schema": {}
               }
             }
           },
           "contentVersion": "1.0.0.0",
           "outputs": {}
         },
-        "parameters": {
-          "$connections": {
-            "value": {
-              "gmail": {
-                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'gmail')]",
-                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('gmail_1_Connection_Name'))]",
-                "connectionName": "[parameters('gmail_1_Connection_Name')]"
-              }
-            }
-          }
-        }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/connections', parameters('gmail_1_Connection_Name'))]"
-      ]
+        "parameters": {}
+      }
     },
     {
-      "type": "MICROSOFT.WEB/CONNECTIONS",
-      "apiVersion": "2016-06-01",
-      "name": "[parameters('gmail_1_Connection_Name')]",
-      "location": "[parameters('logicAppLocation')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
       "properties": {
-        "api": {
-          "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', parameters('logicAppLocation'), '/managedApis/', 'gmail')]"
-        },
-        "displayName": "[parameters('gmail_1_Connection_DisplayName')]"
+        "accountType": "[variables('storageAccountType')]"
       }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2015-04-01",
+      "name": "[variables('hostingPlanName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "name": "[variables('hostingPlanName')]",
+        "computeMode": "Dynamic",
+        "sku": "Dynamic"
+      }
+    },
+    {
+      "apiVersion": "2015-08-01",
+      "type": "Microsoft.Web/sites",
+      "name": "[parameters('functionAppName')]",
+      "location": "[parameters('location')]",
+      "kind": "functionapp",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ],
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "AzureWebJobsDashboard",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[toLower(parameters('functionAppName'))]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~1"
+            },
+            {
+              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "value": "6.5.0"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', parameters('functionAppName'))]"
+          ],
+          "properties": {
+            "RepoUrl": "[variables('repoURL')]",
+            "branch": "[variables('branch')]",
+            "IsManualIntegration": true
+          }
+        }
+      ]
     }
   ],
   "outputs": {}

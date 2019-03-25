@@ -85,10 +85,10 @@
   },
   "variables": {
     "repoUrl": "https://github.com/santoshi4/ARMSource.git",
-    "branch": "master",
-    "functionName": "Echo",
+    "branch": "functionapp",
+    "functionName": "EchoFunction",
     "hostingPlanName": "[parameters('functionAppName')]",
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'azfunctions')]",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'testexamplestorage')]",
     "storageACcountid": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
     "LogicAppLocation": "[parameters('location')]",
     "storageAccountType": "Standard_LRS"

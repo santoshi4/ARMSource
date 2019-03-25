@@ -15,7 +15,10 @@
       "value": "southeastasia"
     },
     "functionAppName": {
-      "value": "ARMFunctionApp20190320030902"
+      "value": "NewARMFunctionApp20190320030902"
+    },
+    "location": {
+      "value": "southeastasia"
     }
   }
 }

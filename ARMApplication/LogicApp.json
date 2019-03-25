@@ -88,7 +88,7 @@
     "branch": "functionapp",
     "functionName": "EchoFunction",
     "hostingPlanName": "[parameters('functionAppName')]",
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'testexamplestorage')]",
+    "storageAccountName": "testexamplestorage",
     "storageACcountid": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
     "LogicAppLocation": "[parameters('location')]",
     "storageAccountType": "Standard_LRS"
